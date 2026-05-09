@@ -1,0 +1,69 @@
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { PaymentStatus, Transaction } from "@/types";
+
+const MAX_RETRIES = 3;
+
+interface PaymentStore {
+  // State
+  status: PaymentStatus;
+  message: string;
+  transactionId: string | null;
+  attempt: number;
+  transactions: Transaction[];
+
+  // Actions
+  startProcessing: (txId: string) => void;
+  setSuccess: (txId: string, message: string) => void;
+  setFailed: (txId: string, message: string) => void;
+  setTimeout: (txId: string) => void;
+  incrementAttempt: () => void;
+  reset: () => void;
+  upsertTransaction: (tx: Transaction) => void;
+}
+
+export const usePaymentStore = create<PaymentStore>()(
+  persist(
+    (set, get) => ({
+      status: "idle",
+      message: "",
+      transactionId: null,
+      attempt: 0,
+      transactions: [],
+
+      startProcessing: (txId) =>
+        set({ status: "processing", transactionId: txId, message: "" }),
+
+      setSuccess: (txId, message) =>
+        set({ status: "success", message }),
+
+      setFailed: (_txId, message) =>
+        set({ status: "failed", message }),
+
+      setTimeout: (_txId) =>
+        set({ status: "timeout", message: "Request timed out." }),
+
+      incrementAttempt: () =>
+        set((s) => ({ attempt: s.attempt + 1 })),
+
+      reset: () =>
+        set({ status: "idle", message: "", transactionId: null, attempt: 0 }),
+
+      upsertTransaction: (tx) =>
+        set((s) => {
+          const exists = s.transactions.some((t) => t.id === tx.id);
+          const next = exists
+            ? s.transactions.map((t) => (t.id === tx.id ? { ...t, ...tx } : t))
+            : [tx, ...s.transactions];
+          return { transactions: next };
+        }),
+    }),
+    {
+      name: "pg_transactions",
+      // Only persist transaction history across sessions, not payment flow state
+      partialize: (state) => ({ transactions: state.transactions }),
+    }
+  )
+);
+
+export const MAX_PAYMENT_RETRIES = MAX_RETRIES;
