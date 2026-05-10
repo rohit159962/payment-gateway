@@ -30,7 +30,6 @@ Frontend cancels the request after 6 seconds. The API intentionally sleeps 8 sec
 
 - Add Luhn algorithm validation for card numbers
 - Unit tests for all utils with Vitest
-- E2E tests with Playwright covering success, failure, and timeout flows
 - Animate card flip to show CVV on the back face
 - Receipt download as PDF on success screen
 - Rate-limit the /api/pay route with an IP-based counter

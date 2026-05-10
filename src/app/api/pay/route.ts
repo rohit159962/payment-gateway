@@ -38,7 +38,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<PaymentResult
       success: true,
       transactionId,
       message: "Payment approved",
-    });
+    },{ headers: { "X-Transaction-Id": transactionId } } );
   }
 
   // ~25% failure
