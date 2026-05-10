@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { PaymentStatus, Transaction } from "@/types";
+import { PaymentStatus, Transaction, PaymentPayload } from "@/types";
 
 const MAX_RETRIES = 3;
 
@@ -11,6 +11,7 @@ interface PaymentStore {
   transactionId: string | null;
   attempt: number;
   transactions: Transaction[];
+  lastPayload: Record<string, unknown> | null;
 
   // Actions
   startProcessing: (txId: string) => void;
@@ -20,6 +21,7 @@ interface PaymentStore {
   incrementAttempt: () => void;
   reset: () => void;
   upsertTransaction: (tx: Transaction) => void;
+  setLastPayload: (payload: Record<string, unknown>) => void;
 }
 
 export const usePaymentStore = create<PaymentStore>()(
@@ -34,17 +36,21 @@ export const usePaymentStore = create<PaymentStore>()(
       startProcessing: (txId) =>
         set({ status: "processing", transactionId: txId, message: "" }),
 
-      setSuccess: (txId, message) =>
-        set({ status: "success", message }),
+      setSuccess: (txId, message) => set({ status: "success", message }),
 
-      setFailed: (_txId, message) =>
-        set({ status: "failed", message }),
+      setFailed: (_txId, message) => set({ status: "failed", message }),
 
       setTimeout: (_txId) =>
         set({ status: "timeout", message: "Request timed out." }),
 
-      incrementAttempt: () =>
-        set((s) => ({ attempt: s.attempt + 1 })),
+      incrementAttempt: () => set((s) => ({ attempt: s.attempt + 1 })),
+
+      lastPayload: null,
+
+      setLastPayload: (payload) =>
+        set({
+          lastPayload: payload,
+        }),
 
       reset: () =>
         set({ status: "idle", message: "", transactionId: null, attempt: 0 }),
@@ -62,8 +68,8 @@ export const usePaymentStore = create<PaymentStore>()(
       name: "pg_transactions",
       // Only persist transaction history across sessions, not payment flow state
       partialize: (state) => ({ transactions: state.transactions }),
-    }
-  )
+    },
+  ),
 );
 
 export const MAX_PAYMENT_RETRIES = MAX_RETRIES;

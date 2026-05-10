@@ -189,7 +189,17 @@ export function CardInput() {
           "Complete all fields to continue"
         )}
       </button>
-
+{status === "failed" || status === "timeout" ? (
+  <button
+    onClick={handleRetry}
+    disabled={attempt >= MAX_PAYMENT_RETRIES}
+    className="w-full py-3 rounded-xl border border-white/10 bg-white/5 text-white font-semibold hover:bg-white/10 transition"
+  >
+    {attempt >= MAX_PAYMENT_RETRIES
+      ? "Maximum retries reached"
+      : `Retry Payment (${attempt}/${MAX_PAYMENT_RETRIES})`}
+  </button>
+) : null}
       <p className="text-center text-xs text-slate-600">🔒 256-bit SSL encrypted</p>
     </div>
   );
