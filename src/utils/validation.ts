@@ -9,15 +9,45 @@ export interface FormErrors {
   amount: string;
 }
 
-export function validateExpiry(value: string): boolean {
+export function validateExpiry(value: string): {
+  valid: boolean;
+  reason?: "invalid" | "expired";
+} {
   const match = value.match(/^(\d{2})\/(\d{2})$/);
-  if (!match) return false;
-  const month = parseInt(match[1]);
-  const year = parseInt("20" + match[2]);
-  if (month < 1 || month > 12) return false;
+
+  if (!match) {
+    return {
+      valid: false,
+      reason: "invalid",
+    };
+  }
+
+  const month = parseInt(match[1], 10);
+  const year = parseInt("20" + match[2], 10);
+
+  // Invalid month
+  if (month < 1 || month > 12) {
+    return {
+      valid: false,
+      reason: "invalid",
+    };
+  }
+
   const now = new Date();
-  const expiry = new Date(year, month - 1, 1);
-  return expiry > new Date(now.getFullYear(), now.getMonth(), 1);
+
+  // Card valid till end of expiry month
+  const expiry = new Date(year, month);
+
+  if (expiry <= now) {
+    return {
+      valid: false,
+      reason: "expired",
+    };
+  }
+
+  return {
+    valid: true,
+  };
 }
 
 export function validateCardNumber(number: string, cardType: CardType): boolean {
@@ -45,13 +75,19 @@ export function getFormErrors(
       ? `Must be ${cardType === "amex" ? 15 : 16} digits`
       : "",
 
-    expiry: !form.expiry
-      ? "Expiry is required"
-      : !/^\d{2}\/\d{2}$/.test(form.expiry)
-      ? "Use MM/YY format"
-      : !validateExpiry(form.expiry)
-      ? "Card has expired"
-      : "",
+   expiry: !form.expiry
+  ? "Expiry is required"
+  : (() => {
+      const result = validateExpiry(form.expiry);
+
+      if (!result.valid) {
+        return result.reason === "invalid"
+          ? "Invalid expiry date"
+          : "Card has expired";
+      }
+
+      return "";
+    })(),
 
     cvv: !form.cvv
       ? "CVV is required"

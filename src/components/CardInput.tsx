@@ -71,12 +71,11 @@ export function CardInput() {
       setSubmitting(false);
     }
   }
+function handleRetry() {
+  if (attempt >= MAX_PAYMENT_RETRIES) return;
 
-  function handleRetry() {
-    if (!transactionId || attempt >= MAX_PAYMENT_RETRIES) return;
-    retryPayment(transactionId, attempt);
-  }
-
+  retryPayment();
+}
   const isProcessing = status === "processing";
 
   return (

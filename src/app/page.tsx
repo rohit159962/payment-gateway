@@ -86,7 +86,7 @@ export default function Home() {
                     amount={usePaymentStore.getState().transactions.find(t => t.id === transactionId)?.amount ?? ""}
                     currency={usePaymentStore.getState().transactions.find(t => t.id === transactionId)?.currency ?? "INR"}
                     transactionId={transactionId}
-                    onRetry={() => retryPayment(transactionId, attempt)}
+                    onRetry={retryPayment}
                     onReset={reset}
                   />
                 )}

@@ -20,21 +20,25 @@ export function usePayment(form: PaymentFormValues) {
       abortRef.current = controller;
 
       // Frontend 6-second timeout
-      const timeoutHandle = setTimeout(
-        () => controller.abort(),
-        TIMEOUT_MS
-      );
+      const timeoutHandle = setTimeout(() => controller.abort(), TIMEOUT_MS);
+      const storedPayload = store.lastPayload;
 
-      const payload: PaymentPayload = {
-        transactionId,
-        cardholderName: form.cardholderName,
-        last4: form.cardNumber.replace(/\s/g, "").slice(-4),
-        expiry: form.expiry,
-        amount: form.amount,
-        currency: form.currency,
-        attempt,
-      };
-
+      const payload: PaymentPayload =
+        attempt > 1 && storedPayload
+          ? {
+              ...storedPayload,
+              attempt,
+            }
+          : {
+              transactionId,
+              cardholderName: form.cardholderName,
+              last4: form.cardNumber.replace(/\s/g, "").slice(-4),
+              expiry: form.expiry,
+              amount: form.amount,
+              currency: form.currency,
+              attempt,
+            };
+      store.setLastPayload(payload);
       try {
         const res = await fetch("/api/pay", {
           method: "POST",
@@ -55,8 +59,8 @@ export function usePayment(form: PaymentFormValues) {
           store.setSuccess(transactionId, result.message);
           store.upsertTransaction({
             id: transactionId,
-            amount: form.amount,
-            currency: form.currency,
+            amount: payload.amount,
+            currency: payload.currency,
             status: "success",
             message: result.message,
             attempts: attempt,
@@ -67,8 +71,8 @@ export function usePayment(form: PaymentFormValues) {
           store.setFailed(transactionId, result.message);
           store.upsertTransaction({
             id: transactionId,
-            amount: form.amount,
-            currency: form.currency,
+            amount: payload.amount,
+            currency: payload.currency,
             status: "failed",
             message: result.message,
             attempts: attempt,
@@ -87,8 +91,8 @@ export function usePayment(form: PaymentFormValues) {
           store.setTimeout(transactionId);
           store.upsertTransaction({
             id: transactionId,
-            amount: form.amount,
-            currency: form.currency,
+            amount: payload.amount,
+            currency: payload.currency,
             status: "timeout",
             message: "Request timed out",
             attempts: attempt,
@@ -97,12 +101,14 @@ export function usePayment(form: PaymentFormValues) {
           });
         } else {
           const msg =
-            err instanceof Error ? err.message : "Network error. Please try again.";
+            err instanceof Error
+              ? err.message
+              : "Network error. Please try again.";
           store.setFailed(transactionId, msg);
           store.upsertTransaction({
             id: transactionId,
-            amount: form.amount,
-            currency: form.currency,
+            amount: payload.amount,
+            currency: payload.currency,
             status: "failed",
             message: msg,
             attempts: attempt,
@@ -112,7 +118,7 @@ export function usePayment(form: PaymentFormValues) {
         }
       }
     },
-    [form, store]
+    [form, store],
   );
 
   function initiatePayment() {
@@ -121,11 +127,16 @@ export function usePayment(form: PaymentFormValues) {
     processPayment(txId, 1);
     return txId;
   }
+  function retryPayment() {
+    const lastPayload = store.lastPayload as PaymentPayload | null;
 
-  function retryPayment(txId: string, currentAttempt: number) {
-    if (currentAttempt >= MAX_PAYMENT_RETRIES) return;
+    if (!lastPayload) return;
+
+    if (lastPayload.attempt >= MAX_PAYMENT_RETRIES) return;
+
     store.incrementAttempt();
-    processPayment(txId, currentAttempt + 1);
+
+    processPayment(lastPayload.transactionId, lastPayload.attempt + 1);
   }
 
   return { initiatePayment, retryPayment };

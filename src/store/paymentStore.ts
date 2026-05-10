@@ -11,7 +11,7 @@ interface PaymentStore {
   transactionId: string | null;
   attempt: number;
   transactions: Transaction[];
-  lastPayload: Record<string, unknown> | null;
+  lastPayload: PaymentPayload | null;
 
   // Actions
   startProcessing: (txId: string) => void;
@@ -21,7 +21,7 @@ interface PaymentStore {
   incrementAttempt: () => void;
   reset: () => void;
   upsertTransaction: (tx: Transaction) => void;
-  setLastPayload: (payload: Record<string, unknown>) => void;
+  setLastPayload: (payload: PaymentPayload) => void;
 }
 
 export const usePaymentStore = create<PaymentStore>()(
