@@ -45,6 +45,9 @@ export function CardInput() {
     if (field === "expiry") val = formatExpiry(raw);
     if (field === "cvv") val = raw.replace(/\D/g, "").slice(0, cvvLen);
     if (field === "amount") val = raw.replace(/[^\d.]/g, "");
+    if (field === "cardholderName") {
+  val = raw.replace(/[^a-zA-Z\s]/g, "");
+}
     if (field === "currency") val = raw;
     setForm((f) => ({ ...f, [field]: val }));
   }

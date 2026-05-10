@@ -65,8 +65,10 @@ export function getFormErrors(
   return {
     cardholderName: !form.cardholderName.trim()
       ? "Cardholder name is required"
-      : form.cardholderName.trim().length < 2
-      ? "Enter a valid name"
+      : !/^[a-zA-Z\s]+$/.test(form.cardholderName.trim())
+? "Name should contain only letters"
+: form.cardholderName.trim().length < 2
+? "Enter a valid name"
       : "",
 
     cardNumber: !form.cardNumber.replace(/\s/g, "")
