@@ -14,7 +14,7 @@ export function usePayment(form: PaymentFormValues) {
     async (transactionId: string, attempt: number) => {
       store.startProcessing(transactionId);
 
-      // Cancel any previous in-flight request
+      // Cancel any previous request
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
