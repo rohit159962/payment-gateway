@@ -66,7 +66,9 @@ export const usePaymentStore = create<PaymentStore>()(
     }),
     {
       name: "pg_transactions",
-      // Only persist transaction history across sessions, not payment flow state
+      // Only persist transaction history — NOT the payment flow state.
+      // This ensures a page refresh always lands the user at idle,
+      // never mid-payment, while keeping history intact.
       partialize: (state) => ({ transactions: state.transactions }),
     },
   ),

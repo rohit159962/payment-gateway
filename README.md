@@ -26,12 +26,13 @@ Frontend cancels the request after 6 seconds. The API intentionally sleeps 8 sec
 - `components/` — presentational  
 - No business logic inside JSX
 
-## What I'd improve given more time
+## What I would improve given more time
 
-- Add Luhn algorithm validation for card numbers  
-- Unit tests for all utils with Vitest  
-- E2E tests with Playwright for the full payment flow  
-- Real currency conversion rates via an FX API  
-- Animate card flip to show CVV on the back  
-- Add receipt download as PDF on success  
-- Rate-limit the `/api/pay` route with an IP-based counter
+- Add Luhn algorithm validation for card numbers
+- Unit tests for all utils with Vitest
+- E2E tests with Playwright covering success, failure, and timeout flows
+- Animate card flip to show CVV on the back face
+- Receipt download as PDF on success screen
+- Rate-limit the /api/pay route with an IP-based counter
+- Add EUR and GBP to the currency selector
+- Skeleton loading state instead of a plain spinner
